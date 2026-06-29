@@ -680,7 +680,7 @@ auth.onAuthStateChanged(async (user) => {
     await loadProgress();
     resetDailyIfNeeded();
     renderHome();
-    goTo('home');
+    goTo('album');
   } else {
     goTo('splash');
   }
