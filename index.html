@@ -239,9 +239,12 @@ body{
 
 .sticker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;background:var(--parchment);border-radius:16px;padding:14px;border:6px solid #d8c399;}
 .sticker-slot{
-  aspect-ratio:3/4;border-radius:10px;position:relative;overflow:hidden;
+  position:relative;border-radius:10px;overflow:hidden;
+  cursor:pointer;width:100%;height:0;padding-top:133.333%;
+}
+.sticker-slot-inner{
+  position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-  cursor:pointer;min-width:0;min-height:0;width:100%;
 }
 .sticker-slot.locked{
   background:repeating-linear-gradient(135deg, #d8c399, #d8c399 8px, #cdb787 8px, #cdb787 16px);
@@ -261,7 +264,7 @@ body{
 .sticker-slot.unlocked.rarity-lendaria{
   box-shadow:0 0 0 2px rgba(231,193,74,.55), 0 6px 18px rgba(231,193,74,.4);
 }
-.sticker-card-img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;}
+.sticker-card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;}
 .sticker-art{font-size:30px;}
 .sticker-name{font-size:9px;font-weight:600;margin-top:4px;padding:0 4px;line-height:1.15;color:var(--ink);}
 .sticker-dup-badge{
@@ -940,7 +943,7 @@ function openPage(catId){
       div.addEventListener('click', () => openStickerModal(st.id));
     } else {
       div.className = 'sticker-slot locked';
-      div.innerHTML = `<div class="sticker-slot-num">${i+1}</div><div class="lock-icon">🔒</div>`;
+      div.innerHTML = `<div class="sticker-slot-num">${i+1}</div><div class="sticker-slot-inner"><div class="lock-icon">🔒</div></div>`;
     }
     grid.appendChild(div);
   });
