@@ -280,14 +280,93 @@ body{
   background:radial-gradient(ellipse at 50% 30%, #21304f, var(--navy-deep) 70%);
   align-items:center;justify-content:center;padding:24px;
 }
-.opening-stage{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;}
+.opening-stage{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;transition:transform .1s;}
+.opening-stage.shake{animation:stageShake .4s ease;}
+@keyframes stageShake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-7px) rotate(-.6deg);}
+  40%{transform:translateX(7px) rotate(.6deg);}
+  60%{transform:translateX(-5px);}
+  80%{transform:translateX(5px);}
+}
 .opening-counter{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:18px;}
 .envelope-seal-wrap{cursor:pointer;text-align:center;}
-.envelope-big{font-size:110px;filter:drop-shadow(0 16px 30px rgba(0,0,0,.5));animation:floatY 2.4s ease-in-out infinite;}
 @keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
 .opening-hint{color:rgba(243,232,210,.55);font-size:13px;margin-top:18px;}
 
+/* ---------- PACOTINHO ILUSTRADO ---------- */
+.envelope-pack{
+  position:relative;width:172px;height:236px;margin:0 auto;
+  animation:floatY 2.4s ease-in-out infinite;
+  filter:drop-shadow(0 16px 30px rgba(0,0,0,.5));
+}
+.envelope-pack-body{
+  position:absolute;inset:0;border-radius:16px;overflow:hidden;
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.16) 0 2px, transparent 2px 13px),
+    linear-gradient(160deg,#aab2bc 0%,#5d6470 38%,#7d848f 58%,#43494f 100%);
+  border:2px solid rgba(255,255,255,.4);
+}
+.envelope-pack-banner{
+  position:absolute;left:6px;right:6px;top:40px;
+  background:linear-gradient(180deg,#6e1620,#3c0c12);
+  border-top:2px solid var(--gold);border-bottom:2px solid var(--gold);
+  padding:8px 4px;text-align:center;border-radius:2px;
+}
+.envelope-pack-banner-title{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:15px;letter-spacing:.5px;line-height:1.15;font-weight:700;}
+.envelope-pack-banner-sub{color:rgba(243,232,210,.85);font-size:7px;letter-spacing:.6px;margin-top:3px;text-transform:uppercase;}
+.envelope-pack-emblem{
+  position:absolute;left:50%;top:132px;transform:translateX(-50%);
+  width:48px;height:48px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff6da, var(--gold) 60%, #8a6a18 100%);
+  border:2px solid #fff3cf;box-shadow:0 4px 10px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.envelope-pack-count{
+  position:absolute;left:0;right:0;bottom:10px;text-align:center;
+  color:rgba(243,232,210,.9);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.5px;
+}
+.envelope-pack-flap{
+  position:absolute;left:0;right:0;top:0;height:50px;z-index:2;
+  background:linear-gradient(160deg,#bcc3cc,#6a7178);
+  border:2px solid rgba(255,255,255,.4);border-bottom:none;
+  clip-path:polygon(0 0,100% 0,100% 62%,91% 78%,82% 60%,73% 82%,64% 58%,55% 84%,46% 58%,37% 82%,28% 60%,19% 78%,10% 60%,0 76%);
+  border-radius:16px 16px 0 0;
+  transform-origin:top center;
+  transition:transform .55s cubic-bezier(.45,0,.3,1), opacity .45s ease .12s;
+}
+.envelope-pack.tearing{animation:none;}
+.envelope-pack.tearing .envelope-pack-flap{
+  transform:translateY(-95px) rotate(-22deg) scale(.8);
+  opacity:0;
+}
+.envelope-pack.tearing .envelope-pack-body{animation:packShake .42s ease;}
+@keyframes packShake{
+  0%,100%{transform:translateX(0) rotate(0);}
+  20%{transform:translateX(-4px) rotate(-1deg);}
+  50%{transform:translateX(4px) rotate(1deg);}
+  80%{transform:translateX(-2px) rotate(0);}
+}
+.opening-flash{
+  position:fixed;inset:0;background:radial-gradient(circle, #fff, rgba(255,255,255,0) 62%);
+  opacity:0;pointer-events:none;z-index:50;
+}
+.opening-flash.flash-active{animation:flashPulse .5s ease-out;}
+@keyframes flashPulse{0%{opacity:0;}18%{opacity:.85;}100%{opacity:0;}}
+
+.card-reveal-zone{position:relative;width:200px;height:280px;}
 .card-reveal-stack{position:relative;width:200px;height:280px;}
+.particle-layer{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:5;}
+.spark-particle{
+  position:absolute;width:6px;height:6px;border-radius:50%;
+  background:var(--gold-bright);
+  box-shadow:0 0 8px 2px rgba(231,193,74,.85);
+  animation:sparkBurst .9s ease-out forwards;
+}
+@keyframes sparkBurst{
+  0%{transform:translate(0,0) scale(1);opacity:1;}
+  100%{transform:translate(var(--sx), var(--sy)) scale(0);opacity:0;}
+}
 .reveal-card{
   position:absolute;inset:0;border-radius:16px;
   overflow:hidden;
@@ -295,12 +374,32 @@ body{
   backface-visibility:hidden;transform:rotateY(180deg);
   transition:transform .6s cubic-bezier(.34,1.56,.64,1);
 }
+.reveal-card.entering{animation:cardFlyIn .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes cardFlyIn{
+  0%{transform:translateY(70px) scale(.65) rotateY(180deg);opacity:0;}
+  55%{opacity:1;}
+  100%{transform:translateY(0) scale(1) rotateY(180deg);opacity:1;}
+}
 .reveal-card.flipped{transform:rotateY(0deg);}
+.reveal-card.entering.flipped{animation:none;}
 .reveal-card.rarity-rara{box-shadow:0 0 30px rgba(184,128,47,.45), 0 20px 45px rgba(0,0,0,.5);}
 .reveal-card.rarity-lendaria{
   box-shadow:0 0 40px rgba(231,193,74,.55), 0 20px 45px rgba(0,0,0,.5);
+  animation:legendaryGlow 1.6s ease-in-out infinite;
+}
+@keyframes legendaryGlow{
+  0%,100%{box-shadow:0 0 32px rgba(231,193,74,.5), 0 20px 45px rgba(0,0,0,.5);}
+  50%{box-shadow:0 0 58px rgba(231,193,74,.95), 0 20px 45px rgba(0,0,0,.5);}
 }
 .reveal-card-img{width:100%;height:100%;object-fit:cover;display:block;}
+.shine-sweep{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg, transparent 32%, rgba(255,255,255,.7) 49%, rgba(255,255,255,.15) 53%, transparent 70%);
+  transform:translateX(-130%);
+}
+.reveal-card.rarity-rara .shine-sweep{animation:shineSweep 1s ease .55s 1;}
+.reveal-card.rarity-lendaria .shine-sweep{animation:shineSweep .95s ease .55s infinite;}
+@keyframes shineSweep{to{transform:translateX(130%);}}
 .reveal-dup{font-size:10px;color:var(--crimson);margin-top:6px;font-weight:600;}
 .opening-controls{margin-top:26px;display:flex;gap:12px;}
 
@@ -491,16 +590,31 @@ body{
 
   <!-- ENVELOPE OPENING -->
   <div class="screen" id="screen-opening">
-    <div class="opening-stage">
+    <div class="opening-flash" id="opening-flash"></div>
+    <div class="opening-stage" id="opening-stage">
       <div class="opening-counter" id="opening-counter">Figurinha 1 de 5</div>
       <div id="opening-tap-wrap" class="envelope-seal-wrap">
-        <div class="envelope-big">✉️</div>
+        <div class="envelope-pack">
+          <div class="envelope-pack-body">
+            <div class="envelope-pack-banner">
+              <div class="envelope-pack-banner-title">HERÓIS<br>DA FÉ</div>
+              <div class="envelope-pack-banner-sub">A História da Salvação</div>
+            </div>
+            <div class="envelope-pack-emblem">✝️</div>
+            <div class="envelope-pack-count">CONTÉM 5 FIGURINHAS</div>
+          </div>
+          <div class="envelope-pack-flap"></div>
+        </div>
         <div class="opening-hint">toque para abrir</div>
       </div>
-      <div class="card-reveal-stack hidden" id="card-reveal-stack">
-        <div class="reveal-card" id="reveal-card">
-          <img class="reveal-card-img" id="reveal-card-img" src="" alt="">
+      <div class="card-reveal-zone hidden" id="card-reveal-stack">
+        <div class="card-reveal-stack">
+          <div class="reveal-card" id="reveal-card">
+            <img class="reveal-card-img" id="reveal-card-img" src="" alt="">
+            <div class="shine-sweep"></div>
+          </div>
         </div>
+        <div class="particle-layer" id="particle-layer"></div>
       </div>
       <div class="reveal-dup hidden" id="reveal-dup">já tem esta — repetida</div>
       <div class="opening-controls hidden" id="opening-controls">
@@ -992,19 +1106,50 @@ function drawSticker(){
 function startOpening(){
   openingQueue = Array.from({length:5}, () => drawSticker());
   openingIndex = 0;
+  const pack = document.querySelector('.envelope-pack');
+  if (pack) pack.classList.remove('tearing');
   document.getElementById('opening-tap-wrap').classList.remove('hidden');
   document.getElementById('card-reveal-stack').classList.add('hidden');
   document.getElementById('opening-controls').classList.add('hidden');
-  document.getElementById('reveal-card').classList.remove('flipped');
+  document.getElementById('reveal-card').classList.remove('flipped','entering');
   document.getElementById('opening-counter').textContent = `Figurinha 1 de 5`;
   goTo('opening');
 }
 
 document.getElementById('opening-tap-wrap').addEventListener('click', () => {
-  document.getElementById('opening-tap-wrap').classList.add('hidden');
-  document.getElementById('card-reveal-stack').classList.remove('hidden');
-  revealCurrent();
+  const pack = document.querySelector('.envelope-pack');
+  const flash = document.getElementById('opening-flash');
+  const tapWrap = document.getElementById('opening-tap-wrap');
+  tapWrap.style.pointerEvents = 'none';
+  pack.classList.add('tearing');
+  setTimeout(() => { flash.classList.add('flash-active'); }, 280);
+  setTimeout(() => {
+    tapWrap.classList.add('hidden');
+    tapWrap.style.pointerEvents = '';
+    document.getElementById('card-reveal-stack').classList.remove('hidden');
+    flash.classList.remove('flash-active');
+    revealCurrent();
+  }, 480);
 });
+
+function spawnParticles(){
+  const layer = document.getElementById('particle-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  for (let i = 0; i < 18; i++){
+    const p = document.createElement('div');
+    p.className = 'spark-particle';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 55 + Math.random() * 80;
+    p.style.setProperty('--sx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--sy', Math.sin(angle) * dist + 'px');
+    p.style.left = '50%';
+    p.style.top = '50%';
+    p.style.animationDelay = (Math.random() * 0.18) + 's';
+    layer.appendChild(p);
+  }
+  setTimeout(() => { layer.innerHTML = ''; }, 1300);
+}
 
 function revealCurrent(){
   const st = openingQueue[openingIndex];
@@ -1012,14 +1157,24 @@ function revealCurrent(){
   progress.stickers[st.id] = (progress.stickers[st.id] || 0) + 1;
 
   const card = document.getElementById('reveal-card');
+  card.classList.remove('flipped','entering');
   card.className = 'reveal-card rarity-' + st.rarity;
   document.getElementById('reveal-card-img').src = imgUrl(st);
   document.getElementById('reveal-card-img').alt = st.name;
   document.getElementById('reveal-dup').classList.toggle('hidden', !wasOwned);
   document.getElementById('opening-counter').textContent = `Figurinha ${openingIndex+1} de 5`;
 
-  card.classList.remove('flipped');
+  void card.offsetWidth;
+  card.classList.add('entering');
   requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('flipped')));
+
+  if (st.rarity === 'lendaria') {
+    spawnParticles();
+    const stage = document.getElementById('opening-stage');
+    stage.classList.remove('shake');
+    void stage.offsetWidth;
+    stage.classList.add('shake');
+  }
 
   document.getElementById('opening-controls').classList.remove('hidden');
   const nextBtn = document.getElementById('btn-next-card');
