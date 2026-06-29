@@ -203,7 +203,37 @@ body{
   color:rgba(243,232,210,.65);font-size:10.5px;font-family:'JetBrains Mono',monospace;
 }
 
-.page-spread{flex:1;overflow-y:auto;padding:16px 14px 30px;}
+.page-spread{flex:1;overflow-y:auto;padding:16px 14px 100px;}
+.page-nav-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(16,23,42,.97);backdrop-filter:blur(10px);
+  border-top:1px solid rgba(201,162,39,.3);
+}
+.page-nav-arrow{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  background:var(--navy-mid);border:1px solid rgba(201,162,39,.35);
+  color:var(--gold-bright);font-size:18px;cursor:pointer;
+}
+.page-nav-index{
+  flex:1;font-family:'Cinzel',serif;font-weight:700;letter-spacing:.05em;
+  background:var(--ink);color:var(--parchment);border:none;border-radius:24px;
+  padding:13px 0;font-size:13px;text-transform:uppercase;cursor:pointer;
+}
+.modal-index-box{max-width:360px;text-align:left;max-height:80vh;display:flex;flex-direction:column;}
+.modal-index-title{
+  font-family:'Cinzel',serif;font-weight:700;font-size:17px;color:var(--ink);
+  text-align:center;margin-bottom:14px;
+}
+.modal-index-list{overflow-y:auto;flex:1;margin-bottom:14px;}
+.modal-index-item{
+  display:flex;align-items:center;gap:10px;padding:11px 6px;cursor:pointer;
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+.modal-index-item-icon{font-size:20px;width:26px;text-align:center;}
+.modal-index-item-name{flex:1;font-size:13px;font-weight:600;color:var(--ink);}
+.modal-index-item-count{font-size:11px;color:#6b5a3a;font-family:'JetBrains Mono',monospace;}
 .page-cat-title{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:16px;text-align:center;margin:4px 0 4px;}
 .page-cat-count{text-align:center;color:rgba(243,232,210,.5);font-size:11px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
 
@@ -419,6 +449,20 @@ body{
       <div class="page-cat-title" id="page-cat-title2"></div>
       <div class="page-cat-count" id="page-cat-count"></div>
       <div class="sticker-grid" id="sticker-grid"></div>
+    </div>
+    <div class="page-nav-bar">
+      <button class="page-nav-arrow" id="btn-page-prev">←</button>
+      <button class="page-nav-index" id="btn-page-index">Índice</button>
+      <button class="page-nav-arrow" id="btn-page-next">→</button>
+    </div>
+  </div>
+
+  <!-- ÍNDICE (lista de categorias para pular direto) -->
+  <div class="modal-overlay" id="modal-index">
+    <div class="modal-box modal-index-box">
+      <div class="modal-index-title">Índice do Álbum</div>
+      <div class="modal-index-list" id="modal-index-list"></div>
+      <button class="btn btn-outline btn-block" id="modal-index-close">Fechar</button>
     </div>
   </div>
 
@@ -729,6 +773,41 @@ document.querySelectorAll('.nav-item').forEach(el => {
 });
 document.getElementById('btn-album-back').addEventListener('click', () => { renderHome(); goTo('home'); });
 document.getElementById('btn-page-back').addEventListener('click', () => goTo('album'));
+
+document.getElementById('btn-page-prev').addEventListener('click', () => {
+  const idx = CATEGORIES.findIndex(c => c.id === currentCategory.id);
+  const prevIdx = (idx - 1 + CATEGORIES.length) % CATEGORIES.length;
+  openPage(CATEGORIES[prevIdx].id);
+});
+document.getElementById('btn-page-next').addEventListener('click', () => {
+  const idx = CATEGORIES.findIndex(c => c.id === currentCategory.id);
+  const nextIdx = (idx + 1) % CATEGORIES.length;
+  openPage(CATEGORIES[nextIdx].id);
+});
+document.getElementById('btn-page-index').addEventListener('click', () => {
+  const list = document.getElementById('modal-index-list');
+  list.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const items = STICKERS.filter(st => st.cat === cat.id);
+    const owned = items.filter(st => progress.stickers[st.id]).length;
+    const div = document.createElement('div');
+    div.className = 'modal-index-item';
+    div.innerHTML = `
+      <div class="modal-index-item-icon">${cat.icon}</div>
+      <div class="modal-index-item-name">${cat.name}</div>
+      <div class="modal-index-item-count">${owned}/${items.length}</div>
+    `;
+    div.addEventListener('click', () => {
+      openPage(cat.id);
+      document.getElementById('modal-index').classList.remove('active');
+    });
+    list.appendChild(div);
+  });
+  document.getElementById('modal-index').classList.add('active');
+});
+document.getElementById('modal-index-close').addEventListener('click', () => {
+  document.getElementById('modal-index').classList.remove('active');
+});
 document.getElementById('album-cover-tap').addEventListener('click', () => {
   currentCategory = CATEGORIES[0];
   renderCategoryPicker();
