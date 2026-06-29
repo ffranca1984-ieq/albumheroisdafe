@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Heróis da Fé — Álbum Bíblico</title>
+<meta name="theme-color" content="#10172a">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK (must load before app code) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --navy-deep:#10172a;
+  --navy-mid:#1b2742;
+  --parchment:#f3e8d2;
+  --parchment-dark:#e3d3ad;
+  --gold:#c9a227;
+  --gold-bright:#f0cf5b;
+  --bronze:#9c7a3f;
+  --silver:#aab2bd;
+  --crimson:#7c2331;
+  --ink:#2a2014;
+  --comum:#9aa3ad;
+  --rara:#b9802f;
+  --legendaria:#e7c14a;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--navy-deep);overflow-x:hidden;}
+body{
+  font-family:'Lora',serif;
+  color:var(--ink);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.font-display{font-family:'Cinzel',serif;}
+.font-mono{font-family:'JetBrains Mono',monospace;}
+
+#app{position:relative;width:100%;min-height:100vh;}
+.screen{
+  position:absolute;inset:0;
+  min-height:100vh;
+  display:none;
+  flex-direction:column;
+}
+.screen.active{display:flex;}
+
+/* ---------- SPLASH ---------- */
+#screen-splash{
+  background:#10172a;
+  align-items:flex-end;justify-content:center;
+  text-align:center;
+  padding:0;
+  overflow:hidden;
+}
+.splash-cover-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;
+}
+.splash-brandbar-title{
+  font-family:'Cinzel',serif;font-weight:900;color:var(--gold-bright);font-size:13px;
+  letter-spacing:.14em;text-transform:uppercase;margin:0 0 2px;
+}
+.splash-brandbar-sub{
+  color:rgba(243,232,210,.55);font-size:10.5px;font-family:'JetBrains Mono',monospace;margin:0 0 16px;
+}
+.splash-overlay{
+  position:relative;z-index:2;width:100%;
+  padding:32px 28px calc(28px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg, transparent, rgba(10,14,26,.75) 35%, rgba(10,14,26,.97));
+}
+.splash-foot{color:rgba(243,232,210,.5);font-size:11px;margin-top:14px;font-family:'JetBrains Mono',monospace;text-align:center;}
+.btn{
+  font-family:'Cinzel',serif;font-weight:700;letter-spacing:.03em;
+  border:none;border-radius:12px;padding:15px 28px;font-size:15px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:10px;justify-content:center;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn:active{transform:scale(.96);}
+.btn-gold{
+  background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color:#2a1f06;box-shadow:0 8px 22px rgba(201,162,39,.35);
+}
+.btn-outline{
+  background:transparent;border:1.5px solid rgba(243,232,210,.35);color:var(--parchment);
+}
+.btn-block{width:100%;}
+
+/* ---------- HOME / cover-ish dashboard ---------- */
+#screen-home{background:var(--navy-deep);}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 18px 14px;
+  background:linear-gradient(180deg, var(--navy-mid), var(--navy-deep));
+  border-bottom:1px solid rgba(201,162,39,.25);
+}
+.topbar-user{display:flex;align-items:center;gap:10px;}
+.avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);object-fit:cover;background:#333;}
+.topbar-name{color:var(--parchment);font-size:13px;font-weight:600;}
+.topbar-sub{color:rgba(243,232,210,.55);font-size:11px;}
+.progress-pill{
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-bright);
+  background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.35);
+  border-radius:20px;padding:6px 12px;
+}
+.home-hero{
+  position:relative;height:220px;overflow:hidden;
+  border-bottom:1px solid rgba(201,162,39,.3);
+}
+.home-hero-img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+.home-hero-fade{
+  position:absolute;left:0;right:0;bottom:0;height:70px;
+  background:linear-gradient(180deg, transparent, var(--navy-deep));
+}
+
+.envelope-card{
+  background:linear-gradient(160deg, #243355, #131c33);
+  border:1px solid rgba(201,162,39,.3);
+  border-radius:20px;padding:22px;text-align:center;margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.envelope-card::before{
+  content:'';position:absolute;top:-40%;left:-10%;width:120%;height:80%;
+  background:radial-gradient(ellipse, rgba(201,162,39,.18), transparent 70%);
+}
+.envelope-icon{font-size:54px;margin-bottom:8px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4));}
+.envelope-title{font-family:'Cinzel',serif;color:var(--parchment);font-size:18px;margin:0 0 4px;}
+.envelope-desc{color:rgba(243,232,210,.6);font-size:12.5px;margin:0 0 16px;}
+.envelope-timer{font-family:'JetBrains Mono',monospace;color:var(--gold-bright);font-size:13px;margin-bottom:12px;}
+
+.bonus-row{display:flex;gap:10px;margin-bottom:18px;}
+.bonus-chip{
+  flex:1;background:var(--navy-mid);border:1px solid rgba(243,232,210,.12);
+  border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;
+  transition:transform .15s;
+}
+.bonus-chip:active{transform:scale(.95);}
+.bonus-chip.done{opacity:.45;}
+.bonus-chip-icon{font-size:24px;margin-bottom:6px;}
+.bonus-chip-label{color:var(--parchment);font-size:11px;font-weight:600;}
+.bonus-chip-sub{color:var(--gold-bright);font-size:9.5px;font-family:'JetBrains Mono',monospace;margin-top:2px;}
+
+.section-label{
+  font-family:'Cinzel',serif;color:var(--gold);font-size:13px;letter-spacing:.1em;
+  text-transform:uppercase;margin:24px 0 12px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:rgba(201,162,39,.25);}
+
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.cat-card{
+  background:var(--navy-mid);border:1px solid rgba(243,232,210,.1);
+  border-radius:16px;padding:14px;cursor:pointer;position:relative;overflow:hidden;
+}
+.cat-card-icon{font-size:30px;margin-bottom:6px;}
+.cat-card-name{color:var(--parchment);font-size:12.5px;font-weight:600;font-family:'Cinzel',serif;line-height:1.25;}
+.cat-card-progress{margin-top:8px;height:5px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.cat-card-fill{height:100%;background:linear-gradient(90deg,var(--bronze),var(--gold-bright));}
+.cat-card-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(243,232,210,.55);margin-top:5px;}
+
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(16,23,42,.96);backdrop-filter:blur(10px);
+  border-top:1px solid rgba(201,162,39,.25);
+  display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  z-index:50;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 0;cursor:pointer;color:rgba(243,232,210,.45);
+}
+.nav-item.active{color:var(--gold-bright);}
+.nav-item-icon{font-size:20px;}
+.nav-item-label{font-size:10px;font-family:'Cinzel',serif;}
+
+/* ---------- ALBUM (cover + pages) ---------- */
+#screen-album{background:var(--navy-deep);}
+.album-header{
+  padding:16px 18px;display:flex;align-items:center;gap:12px;
+  background:var(--navy-mid);border-bottom:1px solid rgba(201,162,39,.25);
+}
+.icon-btn{
+  width:36px;height:36px;border-radius:50%;border:1px solid rgba(243,232,210,.2);
+  background:transparent;color:var(--parchment);display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;
+}
+.album-header-title{color:var(--parchment);font-family:'Cinzel',serif;font-size:15px;flex:1;}
+
+.album-cover-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.album-cover{
+  width:min(280px,78vw);aspect-ratio:3/4;border-radius:14px;
+  background:linear-gradient(165deg,#1c2843,#0c1222 75%);
+  border:3px solid var(--gold);
+  box-shadow:0 25px 50px rgba(0,0,0,.55), inset 0 0 30px rgba(201,162,39,.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:20px;position:relative;cursor:pointer;
+}
+.album-cover-seal{
+  width:74px;height:74px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--gold-bright),var(--gold) 55%,var(--bronze));
+  display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:16px;
+  box-shadow:0 8px 18px rgba(0,0,0,.4);
+}
+.album-cover-title{font-family:'Cinzel',serif;font-weight:900;color:var(--parchment);font-size:21px;line-height:1.2;}
+.album-cover-sub{color:var(--gold);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:8px;}
+.album-cover-tap{position:absolute;bottom:16px;color:rgba(243,232,210,.4);font-size:10.5px;font-family:'JetBrains Mono',monospace;}
+
+.page-spread{flex:1;overflow-y:auto;padding:16px 14px 30px;}
+.page-cat-title{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:16px;text-align:center;margin:4px 0 4px;}
+.page-cat-count{text-align:center;color:rgba(243,232,210,.5);font-size:11px;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+
+.sticker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;background:var(--parchment);border-radius:16px;padding:14px;border:6px solid #d8c399;}
+.sticker-slot{
+  aspect-ratio:3/4;border-radius:10px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  cursor:pointer;
+}
+.sticker-slot.locked{
+  background:repeating-linear-gradient(135deg, #d8c399, #d8c399 8px, #cdb787 8px, #cdb787 16px);
+  border:2px dashed #b59a63;
+}
+.sticker-slot-num{
+  position:absolute;top:4px;left:6px;font-family:'JetBrains Mono',monospace;font-size:9px;
+  color:rgba(80,60,20,.55);
+}
+.sticker-slot.locked .lock-icon{font-size:22px;color:rgba(80,60,20,.35);}
+.sticker-slot.unlocked{
+  border:none;
+  box-shadow:0 4px 10px rgba(0,0,0,.25);
+  background:#000;
+}
+.sticker-slot.unlocked.rarity-rara{box-shadow:0 4px 14px rgba(184,128,47,.4);}
+.sticker-slot.unlocked.rarity-lendaria{
+  box-shadow:0 0 0 2px rgba(231,193,74,.55), 0 6px 18px rgba(231,193,74,.4);
+}
+.sticker-card-img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;}
+.sticker-art{font-size:30px;}
+.sticker-name{font-size:9px;font-weight:600;margin-top:4px;padding:0 4px;line-height:1.15;color:var(--ink);}
+.sticker-dup-badge{
+  position:absolute;top:3px;right:3px;background:var(--crimson);color:#fff;
+  font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:8px;padding:1px 5px;
+}
+
+/* ---------- ENVELOPE OPENING ---------- */
+#screen-opening{
+  background:radial-gradient(ellipse at 50% 30%, #21304f, var(--navy-deep) 70%);
+  align-items:center;justify-content:center;padding:24px;
+}
+.opening-stage{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;}
+.opening-counter{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:18px;}
+.envelope-seal-wrap{cursor:pointer;text-align:center;}
+.envelope-big{font-size:110px;filter:drop-shadow(0 16px 30px rgba(0,0,0,.5));animation:floatY 2.4s ease-in-out infinite;}
+@keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.opening-hint{color:rgba(243,232,210,.55);font-size:13px;margin-top:18px;}
+
+.card-reveal-stack{position:relative;width:200px;height:280px;}
+.reveal-card{
+  position:absolute;inset:0;border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 20px 45px rgba(0,0,0,.5);
+  backface-visibility:hidden;transform:rotateY(180deg);
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1);
+}
+.reveal-card.flipped{transform:rotateY(0deg);}
+.reveal-card.rarity-rara{box-shadow:0 0 30px rgba(184,128,47,.45), 0 20px 45px rgba(0,0,0,.5);}
+.reveal-card.rarity-lendaria{
+  box-shadow:0 0 40px rgba(231,193,74,.55), 0 20px 45px rgba(0,0,0,.5);
+}
+.reveal-card-img{width:100%;height:100%;object-fit:cover;display:block;}
+.reveal-dup{font-size:10px;color:var(--crimson);margin-top:6px;font-weight:600;}
+.opening-controls{margin-top:26px;display:flex;gap:12px;}
+
+/* ---------- TRADES ---------- */
+.trade-tabs{display:flex;gap:8px;padding:14px 18px 0;}
+.trade-tab{flex:1;text-align:center;padding:10px;border-radius:10px;font-family:'Cinzel',serif;font-size:12px;
+  color:rgba(243,232,210,.55);background:var(--navy-mid);cursor:pointer;border:1px solid transparent;}
+.trade-tab.active{color:var(--gold-bright);border-color:rgba(201,162,39,.4);}
+.trade-list{padding:14px 18px 100px;overflow-y:auto;flex:1;}
+.trade-item{
+  background:var(--navy-mid);border:1px solid rgba(243,232,210,.1);border-radius:14px;
+  padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;
+}
+.trade-art{width:46px;height:46px;border-radius:8px;object-fit:cover;flex-shrink:0;}
+.trade-info{flex:1;}
+.trade-info-name{color:var(--parchment);font-weight:600;font-size:13px;font-family:'Cinzel',serif;}
+.trade-info-sub{color:rgba(243,232,210,.5);font-size:11px;margin-top:2px;}
+.trade-empty{text-align:center;color:rgba(243,232,210,.4);font-size:13px;margin-top:40px;padding:0 30px;}
+
+/* ---------- MODAL ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(8,12,22,.78);z-index:100;
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.modal-overlay.active{display:flex;}
+.modal-box{
+  background:var(--parchment);border-radius:18px;padding:24px;max-width:340px;width:100%;text-align:center;
+  border:3px solid var(--gold);
+}
+.modal-card-img{width:100%;max-width:260px;border-radius:14px;margin-bottom:14px;box-shadow:0 10px 25px rgba(0,0,0,.35);}
+.modal-count{font-size:11px;color:#6b5a3a;margin-bottom:16px;}
+.modal-actions{display:flex;gap:10px;}
+
+/* misc */
+.hidden{display:none !important;}
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:#1b2742;color:var(--parchment);padding:11px 20px;border-radius:30px;
+  font-size:13px;border:1px solid rgba(201,162,39,.4);z-index:200;
+  font-family:'Lora',serif;box-shadow:0 8px 20px rgba(0,0,0,.4);
+  opacity:0;transition:opacity .3s;
+}
+.toast.show{opacity:1;}
+.spinner{
+  width:22px;height:22px;border:3px solid rgba(243,232,210,.25);border-top-color:var(--gold-bright);
+  border-radius:50%;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+::-webkit-scrollbar{width:0;height:0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SPLASH / LOGIN -->
+  <div class="screen active" id="screen-splash">
+    <img class="splash-cover-img" src="assets/cover-front.png" alt="Heróis da Fé">
+    <div class="splash-overlay">
+      <p class="splash-brandbar-title">Heróis da Fé</p>
+      <p class="splash-brandbar-sub">Álbum Bíblico de Figurinhas</p>
+      <button class="btn btn-gold btn-block" id="btn-google-login">
+        <span style="font-size:17px;">🔑</span> Entrar com Google
+      </button>
+      <p class="splash-foot">v1.0 · feito para colecionar e compartilhar a fé</p>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen" id="screen-home">
+    <div class="topbar">
+      <div class="topbar-user">
+        <img class="avatar" id="user-avatar" src="" alt="">
+        <div>
+          <div class="topbar-name" id="user-name">—</div>
+          <div class="topbar-sub" id="user-progress-text">0/100 figurinhas</div>
+        </div>
+      </div>
+      <div class="progress-pill" id="progress-pct">0%</div>
+    </div>
+    <div class="home-hero">
+      <img class="home-hero-img" src="assets/cover-front.png" alt="Heróis da Fé">
+      <div class="home-hero-fade"></div>
+    </div>
+    <div class="home-scroll">
+      <div class="envelope-card">
+        <div class="envelope-icon">✉️</div>
+        <h3 class="envelope-title">Envelope do Dia</h3>
+        <p class="envelope-desc">5 figurinhas surpresa, todos os dias</p>
+        <div class="envelope-timer hidden" id="envelope-timer">Próximo em --:--:--</div>
+        <button class="btn btn-gold btn-block" id="btn-open-free">Abrir Envelope Grátis</button>
+      </div>
+
+      <div class="bonus-row">
+        <div class="bonus-chip" id="chip-devocional">
+          <div class="bonus-chip-icon">📖</div>
+          <div class="bonus-chip-label">Devocional</div>
+          <div class="bonus-chip-sub">+1 envelope</div>
+        </div>
+        <div class="bonus-chip" id="chip-leitura">
+          <div class="bonus-chip-icon">📜</div>
+          <div class="bonus-chip-label">Leitura</div>
+          <div class="bonus-chip-sub">+1 envelope</div>
+        </div>
+        <div class="bonus-chip" id="chip-quiz">
+          <div class="bonus-chip-icon">❓</div>
+          <div class="bonus-chip-label">Quiz</div>
+          <div class="bonus-chip-sub">+1 envelope</div>
+        </div>
+      </div>
+
+      <button class="btn btn-outline btn-block hidden" id="btn-open-bonus" style="margin-bottom:20px;">
+        🎁 Abrir Envelope Bônus (<span id="bonus-count">0</span>)
+      </button>
+
+      <div class="section-label">Categorias</div>
+      <div class="cat-grid" id="cat-grid"></div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active" data-nav="home"><div class="nav-item-icon">🏠</div><div class="nav-item-label">Início</div></div>
+      <div class="nav-item" data-nav="album"><div class="nav-item-icon">📔</div><div class="nav-item-label">Álbum</div></div>
+      <div class="nav-item" data-nav="trades"><div class="nav-item-icon">🔄</div><div class="nav-item-label">Trocas</div></div>
+    </div>
+  </div>
+
+  <!-- ALBUM (cover) -->
+  <div class="screen" id="screen-album">
+    <div class="album-header">
+      <button class="icon-btn" id="btn-album-back">←</button>
+      <div class="album-header-title">Álbum Heróis da Fé</div>
+    </div>
+    <div class="album-cover-wrap">
+      <div class="album-cover" id="album-cover-tap">
+        <div class="album-cover-seal">✝️</div>
+        <div class="album-cover-title">Heróis<br>da Fé</div>
+        <div class="album-cover-sub">A História da Salvação</div>
+        <div class="album-cover-tap">toque para abrir as páginas</div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item" data-nav="home"><div class="nav-item-icon">🏠</div><div class="nav-item-label">Início</div></div>
+      <div class="nav-item active" data-nav="album"><div class="nav-item-icon">📔</div><div class="nav-item-label">Álbum</div></div>
+      <div class="nav-item" data-nav="trades"><div class="nav-item-icon">🔄</div><div class="nav-item-label">Trocas</div></div>
+    </div>
+  </div>
+
+  <!-- ALBUM PAGE (category detail) -->
+  <div class="screen" id="screen-page">
+    <div class="album-header">
+      <button class="icon-btn" id="btn-page-back">←</button>
+      <div class="album-header-title" id="page-cat-name">Categoria</div>
+    </div>
+    <div class="page-spread">
+      <div class="page-cat-title" id="page-cat-title2"></div>
+      <div class="page-cat-count" id="page-cat-count"></div>
+      <div class="sticker-grid" id="sticker-grid"></div>
+    </div>
+  </div>
+
+  <!-- TRADES -->
+  <div class="screen" id="screen-trades">
+    <div class="album-header">
+      <div class="album-header-title">Trocas entre Membros</div>
+    </div>
+    <div class="trade-tabs">
+      <div class="trade-tab active" data-tab="disponiveis">Disponíveis</div>
+      <div class="trade-tab" data-tab="minhas">Minhas Repetidas</div>
+    </div>
+    <div class="trade-list" id="trade-list"></div>
+    <div class="bottom-nav">
+      <div class="nav-item" data-nav="home"><div class="nav-item-icon">🏠</div><div class="nav-item-label">Início</div></div>
+      <div class="nav-item" data-nav="album"><div class="nav-item-icon">📔</div><div class="nav-item-label">Álbum</div></div>
+      <div class="nav-item active" data-nav="trades"><div class="nav-item-icon">🔄</div><div class="nav-item-label">Trocas</div></div>
+    </div>
+  </div>
+
+  <!-- ENVELOPE OPENING -->
+  <div class="screen" id="screen-opening">
+    <div class="opening-stage">
+      <div class="opening-counter" id="opening-counter">Figurinha 1 de 5</div>
+      <div id="opening-tap-wrap" class="envelope-seal-wrap">
+        <div class="envelope-big">✉️</div>
+        <div class="opening-hint">toque para abrir</div>
+      </div>
+      <div class="card-reveal-stack hidden" id="card-reveal-stack">
+        <div class="reveal-card" id="reveal-card">
+          <img class="reveal-card-img" id="reveal-card-img" src="" alt="">
+        </div>
+      </div>
+      <div class="reveal-dup hidden" id="reveal-dup">já tem esta — repetida</div>
+      <div class="opening-controls hidden" id="opening-controls">
+        <button class="btn btn-outline" id="btn-next-card">Próxima →</button>
+        <button class="btn btn-gold hidden" id="btn-finish-opening">Concluir ✓</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: sticker detail -->
+<div class="modal-overlay" id="modal-sticker">
+  <div class="modal-box">
+    <img class="modal-card-img" id="modal-card-img" src="" alt="">
+    <div class="modal-count" id="modal-count"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-block" id="modal-close">Fechar</button>
+      <button class="btn btn-gold btn-block hidden" id="modal-offer-trade">Oferecer Troca</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   FIREBASE CONFIG — Fernando: substitua pelas credenciais
+   do projeto Firebase NOVO criado para o Heróis da Fé.
+========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyA4-vUHlTqNFTkv75GjumrWYR6OWuaiDUw",
+  authDomain: "album-heroisdafe.firebaseapp.com",
+  projectId: "album-heroisdafe",
+  storageBucket: "album-heroisdafe.firebasestorage.app",
+  messagingSenderId: "92045206949",
+  appId: "1:92045206949:web:9843483dc1873ddeeeb44c"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* =========================================================
+   DADOS ESTÁTICOS — 10 categorias x 10 personagens = 100
+   Raridade: comum (70%) / rara (25%) / lendaria (5%)
+========================================================= */
+const CATEGORIES = [
+  {id:'patriarcas', name:'Patriarcas e Origens', icon:'🌳'},
+  {id:'exodo', name:'Êxodo e a Lei', icon:'🌊'},
+  {id:'juizes_reis', name:'Juízes e Reis', icon:'👑'},
+  {id:'profetas', name:'Profetas Maiores', icon:'🔥'},
+  {id:'mulheres', name:'Mulheres da Bíblia', icon:'🌸'},
+  {id:'vida_jesus', name:'Vida e Milagres de Jesus', icon:'✝️'},
+  {id:'parabolas', name:'Parábolas e Ensinos', icon:'🌾'},
+  {id:'apostolos', name:'Apóstolos e Discípulos', icon:'⚓'},
+  {id:'igreja', name:'Igreja Primitiva', icon:'🕊️'},
+  {id:'apocalipse', name:'Apocalipse e Esperança', icon:'⭐'},
+];
+
+const STICKERS = [
+  // Patriarcas e Origens
+  s('patriarcas','Adão','🍃','comum','"Então o Senhor Deus formou o homem do pó da terra." Gênesis 2:7'),
+  s('patriarcas','Eva','🌺','comum','"E disse: esta é osso dos meus ossos." Gênesis 2:23'),
+  s('patriarcas','Noé','🚢','legendaria','"Noé fez tudo exatamente como Deus lhe ordenara." Gênesis 6:22'),
+  s('patriarcas','Abraão','⛺','rara','"Saiu sem saber para onde ia." Hebreus 11:8'),
+  s('patriarcas','Sara','👵','comum','"Pela fé, Sara recebeu poder para conceber." Hebreus 11:11'),
+  s('patriarcas','Isaque','🐏','comum','"Deus mesmo proverá o cordeiro." Gênesis 22:8'),
+  s('patriarcas','Jacó','🪜','rara','"Eis que havia uma escada apoiada na terra." Gênesis 28:12'),
+  s('patriarcas','Esaú','🏹','comum','"Esaú era hábil caçador, homem do campo." Gênesis 25:27'),
+  s('patriarcas','José do Egito','🌾','rara','"Deus me enviou adiante de vós." Gênesis 45:7'),
+  s('patriarcas','Judá','🦁','comum','"Judá é um leãozinho." Gênesis 49:9'),
+
+  // Êxodo e a Lei
+  s('exodo','Moisés','📜','legendaria','"Deixa ir o meu povo." Êxodo 5:1'),
+  s('exodo','Arão','🪔','comum','"Arão levantou as mãos sobre o povo." Levítico 9:22'),
+  s('exodo','Miriã','🎶','comum','"Miriã, a profetisa, tomou um tamborim." Êxodo 15:20'),
+  s('exodo','Josué','🛡️','rara','"Sê forte e corajoso." Josué 1:9'),
+  s('exodo','Calebe','🍇','comum','"É terra que mana leite e mel." Números 13:27'),
+  s('exodo','Jetro','🐑','comum','"Jetro, sacerdote de Midiã, aconselhou Moisés." Êxodo 18:19'),
+  s('exodo','Faraó','👑','rara','"Endureceu o coração de Faraó." Êxodo 9:12'),
+  s('exodo','Bezalel','🔨','comum','"Encheu-o do Espírito de Deus, em sabedoria." Êxodo 31:3'),
+  s('exodo','Eleazar','🕯️','comum','"Eleazar, filho de Arão, sucedeu no sacerdócio." Números 20:28'),
+  s('exodo','Raabe','🧶','rara','"Pela fé, Raabe não pereceu com os incrédulos." Hebreus 11:31'),
+
+  // Juízes e Reis
+  s('juizes_reis','Gideão','⚔️','rara','"O Senhor é contigo, homem valente." Juízes 6:12'),
+  s('juizes_reis','Sansão','💪','rara','"E a força dele se foi." Juízes 16:19'),
+  s('juizes_reis','Débora','🌳','comum','"Débora julgava a Israel naquele tempo." Juízes 4:4'),
+  s('juizes_reis','Rute','🌾','comum','"O teu povo é o meu povo." Rute 1:16'),
+  s('juizes_reis','Saul','👑','comum','"Saul, o escolhido entre o povo." 1 Samuel 10:24'),
+  s('juizes_reis','Davi','🎵','legendaria','"Um homem segundo o seu coração." 1 Samuel 13:14'),
+  s('juizes_reis','Salomão','🏛️','rara','"Dá ao teu servo um coração entendido." 1 Reis 3:9'),
+  s('juizes_reis','Jeroboão','🐂','comum','"Jeroboão fez dois bezerros de oro." 1 Reis 12:28'),
+  s('juizes_reis','Acabe','🍇','comum','"Acabe fez o que era mau aos olhos do Senhor." 1 Reis 16:30'),
+  s('juizes_reis','Jeú','🐎','comum','"Jeú dirigia o carro com furor." 2 Reis 9:20'),
+
+  // Profetas Maiores
+  s('profetas','Isaías','🔥','rara','"Eis-me aqui, envia-me a mim." Isaías 6:8'),
+  s('profetas','Jeremias','😢','rara','"Antes que te formasse no ventre, te conheci." Jeremias 1:5'),
+  s('profetas','Ezequiel','🦴','rara','"Ossos secos, ouvi a palavra do Senhor." Ezequiel 37:4'),
+  s('profetas','Daniel','🦁','rara','"Meu Deus enviou o seu anjo." Daniel 6:22'),
+  s('profetas','Elias','⚡','rara','"O Senhor é o Deus, o Senhor é o Deus!" 1 Reis 18:39'),
+  s('profetas','Eliseu','💧','comum','"Espírito de Elias repousou sobre Eliseu." 2 Reis 2:15'),
+  s('profetas','Jonas','🐳','rara','"Jonas esteve três dias no ventre do peixe." Jonas 1:17'),
+  s('profetas','Oséias','💔','comum','"Eu vos sararei a infidelidade." Oséias 14:4'),
+  s('profetas','Amós','🌾','comum','"Buscai o bem, e não o mal." Amós 5:14'),
+  s('profetas','Miquéias','⚖️','comum','"Que pratiques a justiça e ames a misericórdia." Miquéias 6:8'),
+
+  // Mulheres da Bíblia
+  s('mulheres','Maria, mãe de Jesus','💙','legendaria','"Eis aqui a serva do Senhor; faça-se em mim segundo a tua palavra." Lucas 1:38'),
+  s('mulheres','Maria Madalena','🌷','comum','"Ela amou muito, porque muito lhe foi perdoado." Lucas 7:47'),
+  s('mulheres','Ana, a profetisa','🙏','rara','"E, servindo a Deus noite e dia com jejuns e orações." Lucas 2:37'),
+  s('mulheres','Sara, esposa de Abraão','⛺','comum','"Tornou-se mãe de nações." Gênesis 17:16'),
+  s('mulheres','Ester','👑','rara','"E quem sabe se para um tempo como este chegaste a este reino?" Ester 4:14'),
+  s('mulheres','Abigail','🍯','comum','"Abigail, mulher de bom senso." 1 Samuel 25:3'),
+  s('mulheres','A Samaritana','💧','comum','"Quem beber desta água tornará a ter sede." João 4:13'),
+  s('mulheres','Lídia','💜','rara','"O Senhor lhe abriu o coração para atender ao que Paulo dizia." Atos 16:14'),
+  s('mulheres','Priscila','🧵','comum','"Com o marido Áquila, instruía mais exatamente o caminho de Deus." Atos 18:26'),
+  s('mulheres','A viúva generosa','🪙','rara','"Esta viúva pobre deu mais do que todos." Lucas 21:3'),
+
+  // Vida de Jesus
+  s('vida_jesus','Jesus, o Salvador','✝️','legendaria','"O Verbo se fez carne." João 1:14'),
+  s('vida_jesus','João Batista','🌊','rara','"Preparai o caminho do Senhor." Mateus 3:3'),
+  s('vida_jesus','Os Reis Magos','⭐','comum','"Vimos a sua estrela e viemos adorá-lo." Mateus 2:2'),
+  s('vida_jesus','Lázaro','⚰️','rara','"Lázaro, sai para fora!" João 11:43'),
+  s('vida_jesus','A Mulher do Fluxo de Sangue','🩹','comum','"Se eu tão somente tocar na sua veste, ficarei curada." Marcos 5:28'),
+  s('vida_jesus','Bartimeu, o cego','👁️','comum','"Filho de Davi, tem misericórdia de mim." Marcos 10:47'),
+  s('vida_jesus','O paralítico do tanque','🛏️','comum','"Levanta-te, toma o teu leito e anda." João 5:8'),
+  s('vida_jesus','Zaqueu','🌳','comum','"Hoje entrou a salvação nesta casa." Lucas 19:9'),
+  s('vida_jesus','José, pai terreno de Jesus','🔨','comum','"José, homem justo." Mateus 1:19'),
+  s('vida_jesus','Os pastores de Belém','🐑','comum','"Glória a Deus nas alturas." Lucas 2:14'),
+
+  // Parábolas e Ensinos
+  s('parabolas','O Bom Samaritano','🩹','rara','"Vai, e faze tu o mesmo." Lucas 10:37'),
+  s('parabolas','O Filho Pródigo','🤗','rara','"Estava morto e reviveu." Lucas 15:24'),
+  s('parabolas','O Semeador','🌱','comum','"Algumas semente caiu em boa terra." Mateus 13:8'),
+  s('parabolas','As Dez Virgens','🕯️','comum','"Vigiai, pois não sabeis o dia." Mateus 25:13'),
+  s('parabolas','O Bom Pastor','🐑','rara','"Eu sou o bom pastor." João 10:11'),
+  s('parabolas','A Ovelha Perdida','🔍','comum','"Há alegria por uma só que se converte." Lucas 15:7'),
+  s('parabolas','O Rico e Lázaro','🚪','comum','"Um abismo grande separa." Lucas 16:26'),
+  s('parabolas','O Servo Fiel','🔑','comum','"Bom e fiel servo." Mateus 25:21'),
+  s('parabolas','O Grão de Mostarda','🌿','comum','"Torna-se a maior das hortaliças." Mateus 13:32'),
+  s('parabolas','O Fariseu e o Publicano','🙇','comum','"Este desceu justificado." Lucas 18:14'),
+
+  // Apóstolos e Discípulos
+  s('apostolos','Pedro','🗝️','legendaria','"Tu és o Cristo, o Filho do Deus vivo." Mateus 16:16'),
+  s('apostolos','André','🎣','comum','"Vinde após mim." Mateus 4:19'),
+  s('apostolos','João, o discípulo amado','🕊️','rara','"O discípulo a quem Jesus amava." João 21:20'),
+  s('apostolos','Tiago, filho de Zebedeu','⛵','comum','"Deixaram o barco e o seguiram." Marcos 1:20'),
+  s('apostolos','Filipe','🗺️','comum','"Vem e vê." João 1:46'),
+  s('apostolos','Tomé','🤲','rara','"Senhor meu e Deus meu!" João 20:28'),
+  s('apostolos','Mateus, o publicano','📋','comum','"Levantou-se e o seguiu." Mateus 9:9'),
+  s('apostolos','Bartolomeu','🌿','comum','"Verdadeiramente israelita, em quem não há dolo." João 1:47'),
+  s('apostolos','Judas Tadeu','✉️','comum','"Edificando-vos sobre a vossa santíssima fé." Judas 1:20'),
+  s('apostolos','Simão Zelote','🔥','comum','"Um dos doze apóstolos." Lucas 6:15'),
+
+  // Igreja Primitiva
+  s('igreja','Paulo de Tarso','⛓️','legendaria','"Combati o bom combate." 2 Timóteo 4:7'),
+  s('igreja','Barnabé','🤝','rara','"Filho da consolação." Atos 4:36'),
+  s('igreja','Estêvão','💎','rara','"Senhor, recebe o meu espírito." Atos 7:59'),
+  s('igreja','Timóteo','📖','comum','"Desde a infância conheces as Escrituras." 2 Timóteo 3:15'),
+  s('igreja','Tito','🏝️','comum','"Verdadeiro filho na fé comum." Tito 1:4'),
+  s('igreja','Silas','🎶','comum','"Cantavam hinos a Deus na prisão." Atos 16:25'),
+  s('igreja','Febe','🚢','comum','"Nossa irmã, serva da igreja." Romanos 16:1'),
+  s('igreja','Áquila','⛺','comum','"Fazedor de tendas, como Paulo." Atos 18:3'),
+  s('igreja','Apolo','📚','comum','"Homem eloquente, poderoso nas Escrituras." Atos 18:24'),
+  s('igreja','Lucas, o evangelista','✍️','rara','"O médico amado." Colossenses 4:14'),
+
+  // Apocalipse e Esperança
+  s('apocalipse','João, o Revelador','📖','rara','"Eu João vi e ouvi estas coisas." Apocalipse 22:8'),
+  s('apocalipse','O Cordeiro','🐑','legendaria','"Digno é o Cordeiro." Apocalipse 5:12'),
+  s('apocalipse','Os Quatro Cavaleiros','🐎','rara','"Vi quando o Cordeiro abriu um dos selos." Apocalipse 6:1'),
+  s('apocalipse','A Nova Jerusalém','🏙️','rara','"Vi a santa cidade descer do céu." Apocalipse 21:2'),
+  s('apocalipse','As Sete Igrejas','🕯️','comum','"As sete candeias são as sete igrejas." Apocalipse 1:20'),
+  s('apocalipse','Os 24 Anciãos','👑','comum','"Lançam as coroas diante do trono." Apocalipse 4:10'),
+  s('apocalipse','A Árvore da Vida','🌳','comum','"Para a cura das nações." Apocalipse 22:2'),
+  s('apocalipse','O Livro da Vida','📕','rara','"Aquele que não estava escrito no livro." Apocalipse 20:15'),
+  s('apocalipse','O Anjo da Trombeta','📯','comum','"Os sete anjos tocaram as trombetas." Apocalipse 8:6'),
+  s('apocalipse','A Queda de Babilônia','🏛️','comum','"Caiu, caiu a grande Babilônia!" Apocalipse 18:2'),
+];
+
+function s(cat,name,icon,rarity,verse){
+  return {id:(cat+'_'+name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_'), cat, name, icon, rarity, verse};
+}
+
+const RARITY_WEIGHTS = {comum:70, rara:25, lendaria:5};
+const RARITY_LABEL = {comum:'Comum', rara:'Rara', lendaria:'Lendária'};
+
+const IMG_BASE = 'stickers/';
+function imgUrl(st){
+  const file = st.id.startsWith(st.cat + '_') ? st.id.slice(st.cat.length + 1) : st.id;
+  return `${IMG_BASE}${st.cat}/${file}.png`;
+}
+
+/* =========================================================
+   ESTADO
+========================================================= */
+let currentUser = null;
+let progress = { stickers:{}, lastFreeEnvelope:0, bonusEnvelopes:0, completedToday:{devocional:false,leitura:false,quiz:false}, lastResetDay:'' };
+let currentCategory = null;
+let openingQueue = [];
+let openingIndex = 0;
+let modalStickerId = null;
+
+const todayKey = () => new Date().toISOString().slice(0,10);
+
+/* =========================================================
+   AUTH
+========================================================= */
+document.getElementById('btn-google-login').addEventListener('click', () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => showToast('Erro ao entrar: ' + err.message));
+});
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('user-avatar').src = user.photoURL || '';
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    await loadProgress();
+    resetDailyIfNeeded();
+    renderHome();
+    goTo('album');
+  } else {
+    goTo('splash');
+  }
+});
+
+/* =========================================================
+   FIRESTORE: progresso
+========================================================= */
+async function loadProgress(){
+  const ref = db.collection('albumProgress').doc(currentUser.uid);
+  const snap = await ref.get();
+  if (snap.exists) {
+    progress = Object.assign(progress, snap.data());
+    if(!progress.stickers) progress.stickers = {};
+    if(!progress.completedToday) progress.completedToday = {devocional:false,leitura:false,quiz:false};
+  } else {
+    progress.lastResetDay = todayKey();
+    await ref.set(progress);
+  }
+}
+
+async function saveProgress(){
+  if(!currentUser) return;
+  await db.collection('albumProgress').doc(currentUser.uid).set(progress, {merge:true});
+}
+
+function resetDailyIfNeeded(){
+  const tk = todayKey();
+  if (progress.lastResetDay !== tk) {
+    progress.lastResetDay = tk;
+    progress.completedToday = {devocional:false,leitura:false,quiz:false};
+    saveProgress();
+  }
+}
+
+/* =========================================================
+   NAVEGAÇÃO
+========================================================= */
+function goTo(screen){
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.nav === screen);
+  });
+}
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const nav = el.dataset.nav;
+    if (nav === 'home') { renderHome(); goTo('home'); }
+    if (nav === 'album') { goTo('album'); }
+    if (nav === 'trades') { renderTrades(); goTo('trades'); }
+  });
+});
+document.getElementById('btn-album-back').addEventListener('click', () => { renderHome(); goTo('home'); });
+document.getElementById('btn-page-back').addEventListener('click', () => goTo('album'));
+document.getElementById('album-cover-tap').addEventListener('click', () => {
+  currentCategory = CATEGORIES[0];
+  renderCategoryPicker();
+});
+
+function renderCategoryPicker(){
+  // mostra a lista de categorias como "páginas" -> abre a primeira ou pede escolha via grid já visível na home
+  openPage(CATEGORIES[0].id);
+}
+
+/* =========================================================
+   HOME
+========================================================= */
+function renderHome(){
+  const total = STICKERS.length;
+  const owned = Object.keys(progress.stickers).length;
+  document.getElementById('user-progress-text').textContent = `${owned}/${total} figurinhas`;
+  document.getElementById('progress-pct').textContent = Math.round((owned/total)*100) + '%';
+
+  // envelope grátis / timer
+  const now = Date.now();
+  const next = (progress.lastFreeEnvelope || 0) + 24*60*60*1000;
+  const timerEl = document.getElementById('envelope-timer');
+  const btnFree = document.getElementById('btn-open-free');
+  if (now < next) {
+    timerEl.classList.remove('hidden');
+    btnFree.disabled = true;
+    btnFree.style.opacity = .5;
+    updateCountdown(next);
+  } else {
+    timerEl.classList.add('hidden');
+    btnFree.disabled = false;
+    btnFree.style.opacity = 1;
+  }
+
+  // bonus
+  document.getElementById('chip-devocional').classList.toggle('done', !!progress.completedToday.devocional);
+  document.getElementById('chip-leitura').classList.toggle('done', !!progress.completedToday.leitura);
+  document.getElementById('chip-quiz').classList.toggle('done', !!progress.completedToday.quiz);
+  const bonusBtn = document.getElementById('btn-open-bonus');
+  document.getElementById('bonus-count').textContent = progress.bonusEnvelopes || 0;
+  bonusBtn.classList.toggle('hidden', !(progress.bonusEnvelopes > 0));
+
+  // categorias
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const items = STICKERS.filter(st => st.cat === cat.id);
+    const owned = items.filter(st => progress.stickers[st.id]).length;
+    const pct = Math.round((owned/items.length)*100);
+    const div = document.createElement('div');
+    div.className = 'cat-card';
+    div.innerHTML = `
+      <div class="cat-card-icon">${cat.icon}</div>
+      <div class="cat-card-name">${cat.name}</div>
+      <div class="cat-card-progress"><div class="cat-card-fill" style="width:${pct}%"></div></div>
+      <div class="cat-card-count">${owned}/${items.length}</div>
+    `;
+    div.addEventListener('click', () => openPage(cat.id));
+    grid.appendChild(div);
+  });
+}
+
+let countdownTimer = null;
+function updateCountdown(next){
+  if (countdownTimer) clearInterval(countdownTimer);
+  const el = document.getElementById('envelope-timer');
+  function tick(){
+    const diff = next - Date.now();
+    if (diff <= 0) { clearInterval(countdownTimer); renderHome(); return; }
+    const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+    const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+    const sec = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+    el.textContent = `Próximo em ${h}:${m}:${sec}`;
+  }
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+document.getElementById('btn-open-free').addEventListener('click', () => {
+  const now = Date.now();
+  const next = (progress.lastFreeEnvelope || 0) + 24*60*60*1000;
+  if (now < next) return;
+  progress.lastFreeEnvelope = now;
+  saveProgress();
+  startOpening();
+});
+
+document.getElementById('btn-open-bonus').addEventListener('click', () => {
+  if (progress.bonusEnvelopes > 0) {
+    progress.bonusEnvelopes -= 1;
+    saveProgress();
+    startOpening();
+  }
+});
+
+[['chip-devocional','devocional'],['chip-leitura','leitura'],['chip-quiz','quiz']].forEach(([elId,key]) => {
+  document.getElementById(elId).addEventListener('click', () => {
+    if (progress.completedToday[key]) { showToast('Você já concluiu isso hoje.'); return; }
+    progress.completedToday[key] = true;
+    progress.bonusEnvelopes = (progress.bonusEnvelopes || 0) + 1;
+    saveProgress();
+    renderHome();
+    showToast('+1 envelope bônus! 🎁');
+  });
+});
+
+/* =========================================================
+   PÁGINA DA CATEGORIA
+========================================================= */
+function openPage(catId){
+  currentCategory = CATEGORIES.find(c => c.id === catId);
+  const items = STICKERS.filter(st => st.cat === catId);
+  const owned = items.filter(st => progress.stickers[st.id]).length;
+  document.getElementById('page-cat-name').textContent = currentCategory.name;
+  document.getElementById('page-cat-title2').textContent = currentCategory.icon + ' ' + currentCategory.name;
+  document.getElementById('page-cat-count').textContent = `${owned} de ${items.length} desbloqueadas`;
+
+  const grid = document.getElementById('sticker-grid');
+  grid.innerHTML = '';
+  items.forEach((st, i) => {
+    const ownedCount = progress.stickers[st.id] || 0;
+    const div = document.createElement('div');
+    if (ownedCount > 0) {
+      div.className = `sticker-slot unlocked rarity-${st.rarity}`;
+      div.innerHTML = `
+        ${ownedCount > 1 ? `<div class="sticker-dup-badge">x${ownedCount}</div>` : ''}
+        <img class="sticker-card-img" src="${imgUrl(st)}" alt="${st.name}">
+      `;
+      div.addEventListener('click', () => openStickerModal(st.id));
+    } else {
+      div.className = 'sticker-slot locked';
+      div.innerHTML = `<div class="sticker-slot-num">${i+1}</div><div class="lock-icon">🔒</div>`;
+    }
+    grid.appendChild(div);
+  });
+  goTo('page');
+}
+
+/* =========================================================
+   MODAL DE FIGURINHA
+========================================================= */
+function openStickerModal(stickerId){
+  modalStickerId = stickerId;
+  const st = STICKERS.find(x => x.id === stickerId);
+  const count = progress.stickers[stickerId] || 0;
+  document.getElementById('modal-card-img').src = imgUrl(st);
+  document.getElementById('modal-card-img').alt = st.name;
+  document.getElementById('modal-count').textContent = `Você tem ${count} unidade(s)`;
+  document.getElementById('modal-offer-trade').classList.toggle('hidden', count < 2);
+  document.getElementById('modal-sticker').classList.add('active');
+}
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-sticker').classList.remove('active');
+});
+document.getElementById('modal-offer-trade').addEventListener('click', async () => {
+  await offerTrade(modalStickerId);
+  document.getElementById('modal-sticker').classList.remove('active');
+});
+
+/* =========================================================
+   ABERTURA DE ENVELOPE
+========================================================= */
+function pickRarity(){
+  const r = Math.random()*100;
+  if (r < RARITY_WEIGHTS.lendaria) return 'lendaria';
+  if (r < RARITY_WEIGHTS.lendaria + RARITY_WEIGHTS.rara) return 'rara';
+  return 'comum';
+}
+function drawSticker(){
+  const rarity = pickRarity();
+  const pool = STICKERS.filter(st => st.rarity === rarity);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function startOpening(){
+  openingQueue = Array.from({length:5}, () => drawSticker());
+  openingIndex = 0;
+  document.getElementById('opening-tap-wrap').classList.remove('hidden');
+  document.getElementById('card-reveal-stack').classList.add('hidden');
+  document.getElementById('opening-controls').classList.add('hidden');
+  document.getElementById('reveal-card').classList.remove('flipped');
+  document.getElementById('opening-counter').textContent = `Figurinha 1 de 5`;
+  goTo('opening');
+}
+
+document.getElementById('opening-tap-wrap').addEventListener('click', () => {
+  document.getElementById('opening-tap-wrap').classList.add('hidden');
+  document.getElementById('card-reveal-stack').classList.remove('hidden');
+  revealCurrent();
+});
+
+function revealCurrent(){
+  const st = openingQueue[openingIndex];
+  const wasOwned = !!progress.stickers[st.id];
+  progress.stickers[st.id] = (progress.stickers[st.id] || 0) + 1;
+
+  const card = document.getElementById('reveal-card');
+  card.className = 'reveal-card rarity-' + st.rarity;
+  document.getElementById('reveal-card-img').src = imgUrl(st);
+  document.getElementById('reveal-card-img').alt = st.name;
+  document.getElementById('reveal-dup').classList.toggle('hidden', !wasOwned);
+  document.getElementById('opening-counter').textContent = `Figurinha ${openingIndex+1} de 5`;
+
+  card.classList.remove('flipped');
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('flipped')));
+
+  document.getElementById('opening-controls').classList.remove('hidden');
+  const nextBtn = document.getElementById('btn-next-card');
+  const finishBtn = document.getElementById('btn-finish-opening');
+  if (openingIndex === openingQueue.length - 1) {
+    nextBtn.classList.add('hidden');
+    finishBtn.classList.remove('hidden');
+  } else {
+    nextBtn.classList.remove('hidden');
+    finishBtn.classList.add('hidden');
+  }
+}
+document.getElementById('btn-next-card').addEventListener('click', () => {
+  openingIndex += 1;
+  revealCurrent();
+});
+document.getElementById('btn-finish-opening').addEventListener('click', async () => {
+  await saveProgress();
+  renderHome();
+  goTo('home');
+  showToast('Figurinhas adicionadas ao álbum!');
+});
+
+/* =========================================================
+   TROCAS (Firestore: coleção tradeOffers)
+========================================================= */
+let tradeTab = 'disponiveis';
+document.querySelectorAll('.trade-tab').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.trade-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    tradeTab = el.dataset.tab;
+    renderTrades();
+  });
+});
+
+async function offerTrade(stickerId){
+  const st = STICKERS.find(x => x.id === stickerId);
+  await db.collection('tradeOffers').add({
+    uid: currentUser.uid,
+    userName: currentUser.displayName || currentUser.email,
+    stickerId: st.id,
+    stickerName: st.name,
+    stickerIcon: st.icon,
+    rarity: st.rarity,
+    status: 'disponivel',
+    createdAt: Date.now()
+  });
+  showToast('Figurinha oferecida para troca! 🔄');
+  renderTrades();
+}
+
+async function renderTrades(){
+  const list = document.getElementById('trade-list');
+  list.innerHTML = `<div style="text-align:center;padding:30px;"><div class="spinner" style="margin:0 auto;"></div></div>`;
+
+  if (tradeTab === 'disponiveis') {
+    const snap = await db.collection('tradeOffers').where('status','==','disponivel').orderBy('createdAt','desc').limit(50).get();
+    list.innerHTML = '';
+    let any = false;
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.uid === currentUser.uid) return; // não mostra a própria oferta aqui
+      any = true;
+      const div = document.createElement('div');
+      div.className = 'trade-item';
+      div.innerHTML = `
+        <img class="trade-art" src="${imgUrl(STICKERS.find(x=>x.id===d.stickerId))}" alt="${d.stickerName}">
+        <div class="trade-info">
+          <div class="trade-info-name">${d.stickerName}</div>
+          <div class="trade-info-sub">oferecida por ${d.userName} · ${RARITY_LABEL[d.rarity]}</div>
+        </div>
+        <button class="btn btn-outline" style="padding:8px 14px;font-size:12px;">Quero</button>
+      `;
+      div.querySelector('button').addEventListener('click', () => requestTrade(doc.id, d));
+      list.appendChild(div);
+    });
+    if (!any) list.innerHTML = `<div class="trade-empty">Nenhuma figurinha disponível para troca no momento. Volte mais tarde ou ofereça uma repetida sua!</div>`;
+  } else {
+    // minhas repetidas
+    list.innerHTML = '';
+    const dups = Object.entries(progress.stickers).filter(([id,count]) => count > 1);
+    if (dups.length === 0) {
+      list.innerHTML = `<div class="trade-empty">Você ainda não tem figurinhas repetidas. Abra mais envelopes para conseguir!</div>`;
+      return;
+    }
+    dups.forEach(([id,count]) => {
+      const st = STICKERS.find(x => x.id === id);
+      const div = document.createElement('div');
+      div.className = 'trade-item';
+      div.innerHTML = `
+        <img class="trade-art" src="${imgUrl(st)}" alt="${st.name}">
+        <div class="trade-info">
+          <div class="trade-info-name">${st.name}</div>
+          <div class="trade-info-sub">você tem ${count} · ${RARITY_LABEL[st.rarity]}</div>
+        </div>
+        <button class="btn btn-gold" style="padding:8px 14px;font-size:12px;">Oferecer</button>
+      `;
+      div.querySelector('button').addEventListener('click', () => offerTrade(id));
+      list.appendChild(div);
+    });
+  }
+}
+
+async function requestTrade(offerId, offerData){
+  // V1 simplificado: ao aceitar, a figurinha é transferida para quem pediu,
+  // e quem ofereceu recebe uma notificação simples via status na coleção.
+  try {
+    await db.runTransaction(async (tx) => {
+      const offerRef = db.collection('tradeOffers').doc(offerId);
+      const offerSnap = await tx.get(offerRef);
+      if (!offerSnap.exists || offerSnap.data().status !== 'disponivel') {
+        throw new Error('Esta oferta já não está disponível.');
+      }
+      tx.update(offerRef, { status: 'concluida', receivedBy: currentUser.uid, receivedByName: currentUser.displayName || currentUser.email });
+    });
+    progress.stickers[offerData.stickerId] = (progress.stickers[offerData.stickerId] || 0) + 1;
+    await saveProgress();
+    showToast(`Você recebeu: ${offerData.stickerName}! 🎉`);
+    renderHome();
+    renderTrades();
+  } catch(e) {
+    showToast(e.message || 'Não foi possível concluir a troca.');
+    renderTrades();
+  }
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* =========================================================
+   SERVICE WORKER (PWA) — registra apenas se existir sw.js
+========================================================= */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
