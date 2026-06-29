@@ -31,7 +31,7 @@
   --legendaria:#e7c14a;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;height:100%;background:var(--navy-deep);overflow-x:hidden;}
+html,body{margin:0;padding:0;height:100%;background:#05080f;overflow-x:hidden;}
 body{
   font-family:'Lora',serif;
   color:var(--ink);
@@ -41,7 +41,10 @@ body{
 .font-display{font-family:'Cinzel',serif;}
 .font-mono{font-family:'JetBrains Mono',monospace;}
 
-#app{position:relative;width:100%;min-height:100vh;}
+#app{position:relative;width:100%;max-width:480px;margin:0 auto;min-height:100vh;background:var(--navy-deep);box-shadow:0 0 60px rgba(0,0,0,.6);}
+@media (min-width:481px){
+  .page-nav-bar,.bottom-nav{max-width:480px;margin:0 auto;left:50%;right:auto;transform:translateX(-50%);}
+}
 .screen{
   position:absolute;inset:0;
   min-height:100vh;
