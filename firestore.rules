@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cada usuário só lê/escreve o próprio progresso
+    match /albumProgress/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Ofertas de troca: qualquer usuário logado pode ver as disponíveis,
+    // mas só pode criar/alterar com seu próprio uid ou para aceitar uma oferta
+    match /tradeOffers/{offerId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth != null;
+    }
+  }
+}

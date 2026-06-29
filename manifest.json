@@ -1,0 +1,22 @@
+{
+  "name": "Heróis da Fé — Álbum Bíblico",
+  "short_name": "Heróis da Fé",
+  "description": "Colecione figurinhas de personagens da Bíblia em envelopes diários.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10172a",
+  "theme_color": "#10172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
